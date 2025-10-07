@@ -1,5 +1,7 @@
+#Archivo encargado de centralizar conexiones y definer sesiones
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+#Importar la configuracion de .env desde el settings de config en el core
 from app.core.config import settings
 
 # Motor para base de datos principal
