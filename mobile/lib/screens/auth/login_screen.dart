@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../utils/colors.dart';
 import '../../utils/text_styles.dart';
 import '../../utils/validators.dart';
@@ -151,6 +153,48 @@ class _LoginScreenState extends State<LoginScreen>
       });
     }
   }
+  Future<void> _loginWithBackend() async {
+  final url = Uri.parse('https://renetta-concordal-anderson.ngrok-free.dev/admin/users'); // <-- cambia por tu URL ngrok
+
+  final body = jsonEncode({
+    "nombre": "Admin Demo",
+    "correo": _emailController.text.trim(),
+    "password": _passwordController.text.trim(),
+    "rol": "admin"
+  });
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("✅ Usuario creado: ${data['uid']}");
+
+      if (mounted) {
+        setState(() {
+          _buttonState = ButtonState.success;
+        });
+        Future.delayed(const Duration(milliseconds: 1000), () {
+          context.go('/network-meter');
+        });
+      }
+    } else {
+      print("❌ Error ${response.statusCode}: ${response.body}");
+      setState(() {
+        _buttonState = ButtonState.error;
+      });
+    }
+  } catch (e) {
+    print("🚨 Error de conexión: $e");
+    setState(() {
+      _buttonState = ButtonState.error;
+    });
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -372,7 +416,12 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildLoginButton() {
     return AnimatedButton(
       text: 'Iniciar Sesión',
-      onPressed: _handleLogin,
+      onPressed: () async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _buttonState = ButtonState.loading);
+      await _loginWithBackend();
+    }
+  },
       state: _buttonState,
       isFullWidth: true,
       icon: Icons.login,

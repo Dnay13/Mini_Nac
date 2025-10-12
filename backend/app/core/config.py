@@ -5,8 +5,7 @@ class Settings(BaseSettings):
     MYSQL_MAIN_URL: str
     MYSQL_RADIUS_URL: str
     FIREBASE_CREDENTIALS: str
-
-
+    
     class Config:
         env_file = ".env"
 settings = Settings()
