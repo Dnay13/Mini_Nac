@@ -39,6 +39,7 @@ def crear_admin(admin: AdminCreate, db: Session = Depends(get_db)):
         password=admin.password
     )
 
+
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)

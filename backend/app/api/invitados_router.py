@@ -1,5 +1,4 @@
-#revisar
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models.invitado import UsuarioInvitado
@@ -17,18 +16,29 @@ def get_db():
 
 @router.post("/", response_model=InvitadoOut)
 def crear_invitado(data: InvitadoCreate, db: Session = Depends(get_db)):
+    # Generar UID autoincremental
+    ultimo = db.query(UsuarioInvitado).order_by(UsuarioInvitado.uid.desc()).first()
+    nuevo_numero = int(ultimo.uid.replace("USR", "")) + 1 if ultimo else 1
+    nuevo_uid = f"USR{nuevo_numero}"
+
     nuevo = UsuarioInvitado(
-        uid=f"USR{db.query(UsuarioInvitado).count()+1:04d}",
+        uid=nuevo_uid,
         username=data.username,
         password=data.password,
         creado_por=data.creado_por,
         session_timeout=data.session_timeout
     )
+
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)
-    
-    # Crear también en RADIUS
-    crear_usuario_radius(data.username, data.password, data.session_timeout)
-    
+
+    # Crear usuario en FreeRADIUS
+    try:
+        crear_usuario_radius(data.username, data.password, data.session_timeout)
+    except Exception as e:
+        db.delete(nuevo)
+        db.commit()
+        raise HTTPException(status_code=500, detail=f"Error al crear en RADIUS: {e}")
+
     return nuevo
