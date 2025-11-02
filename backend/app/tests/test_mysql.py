@@ -2,11 +2,12 @@ import pymysql
 
 connection = pymysql.connect(
     host='0.tcp.sa.ngrok.io',
-    port=17767,
+    port=10910,
     user='miniadmin',
     password='admin',
     database='mini_nac'
 )
+
 
 print("✅ Conexión establecida con MySQL a través de ngrok")
 
